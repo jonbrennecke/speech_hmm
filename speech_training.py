@@ -37,7 +37,7 @@ if __name__ == '__main__':
 					frame = data[i*10:(i*10)+30]
 					mfcc = signallib.mfcc(frame)
 					output = n.update(mfcc)
-					mp.update(mfcc[0:len(mfcc)-1],index,len(files)*3)
+					mp.update( mfcc,index,len(files) * 3 )
 					index += 1
 
 				name = filename.split('.')[0]
