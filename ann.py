@@ -15,11 +15,14 @@ class SelfOrganizingMap() :
 		allweights = self.network.getWeights()
 		dist, modinputs = [], []
 		for i in range(0,len(allweights)) :
+			print len(inputs)
 			modinputs.append(inputs)
-			inputs.append(-1)
 			wsum = self.layerSum(inputs,allweights[i])
 			inputs = [ self.network.sigmoid(s) for s in wsum ]
+			print len(inputs)
 			for j in range(0,len(allweights[i])) :
+
+				print 'here'
 
 				# the n-dimensional Euclidean distance is a measure of
 				# the similarity between the input vector and the neuron's weights
@@ -76,6 +79,7 @@ class SelfOrganizingMap() :
 		wsum = []
 		for neuron in layer :
 			wsum.append(sum(neuron * inputs))
+		# wsum.append(-1)
 		return wsum
 
 	def distance(self,v1,v2) :
@@ -86,29 +90,28 @@ class Network() :
 
 		# __init__ from file
 		# always try opening the ann.log file first
-		# try :
-		# 	with open('ann.log','r') as f :
-		# 		doc = f.read()
-		# 		layers = self.parseFile(doc)
-		# 		self.layers = []
-		# 		for layer in layers :
-		# 			setlayer = []
-		# 			for weights in layer :
-		# 				setlayer.append(Neuron(weights))
-		# 				self.layers.append(NeuronLayer(**{'neurons' : setlayer }))
+		try :
+			with open('ann.log','r') as f :
+				doc = f.read()
+				layers = self.parseFile(doc)
+				self.layers = []
+				for layer in layers :
+					weights = [ Neuron(w) for w in layer ]
+					# print len(layer[0])
+					self.layers.append( NeuronLayer( **{'neurons' : weights[0:len(weights)-1] } ) )
 
-		# 		self.ninputs = self.layers[0].ninputs
-		# 		self.noutputs = self.layers[-1].ninputs
-		# 		self.numlayers = abs( self.ninputs - self.noutputs )
+				self.ninputs = self.layers[0].ninputs
+				self.noutputs = self.layers[-1].ninputs + 2
+				self.numlayers = abs( self.ninputs - self.noutputs )
 
-		# except IOError :
+		except IOError :
 
-		# 	# __init__ from input
-			
-		self.ninputs = ninputs
-		self.noutputs = noutputs
-		self.numlayers = abs( noutputs - ninputs )		
-		self.layers = [ NeuronLayer( **{ 'ninputs' : ninputs+i+1, 'nneurons' : ninputs+i }) for i in range(0,self.numlayers) ]
+			# __init__ from input
+			self.ninputs = ninputs
+			self.noutputs = noutputs
+			self.numlayers = abs( noutputs - ninputs )	
+			self.layers = [ NeuronLayer( **{ 'nneurons' : ninputs+i+1, 'ninputs' : ninputs+i }) for i in range(0,self.numlayers) ]
+			# print self.ninputs, self.noutputs, self.numlayers
 
 	# load the neural network from a file
 	def parseFile(self,doc) :
@@ -118,28 +121,32 @@ class Network() :
 		layers = [ list() ]
 		for i in range(0,len(result)) :
 
-			if result[i] == '[' and result[i+1] != '[' and len(result[i+1]) > 2:
+			if result[i] == '[' and result[i+1] != '[' and len(result[i+1]) > 2 :
 				l = re.split(re.compile('\s+'),result[i+1])
+				l = [ s.strip(',') for s in l ]
 				l = filter(None,l)
 				l = map(float,l)
 				layers[-1].append(l)
 
 			if result[i] == '[' and result[i-1] == '[' :
 				layers.append(list())
+
 		return layers[1::]
 
 	def createFile(self) :
 		f = open('ann.log', 'w')
 		for layer in self.layers :
-			f.write( str(layer.getWeights()) )
+			weights = layer.getWeights()
+			# weights = [ list(w[0:-1]) for w in weights ]
+			f.write( str(weights) )
 		f.close()
 
 	def update(self,inputs) :
 		if len(inputs) != self.ninputs :
-			return
+			return 
 
 		for layer in self.layers :
-			inputs.append(-1)
+			print 'here'
 			wsum = layer.sum(inputs)
 			inputs = [ self.sigmoid(s) for s in wsum ]
 
@@ -159,7 +166,8 @@ class NeuronLayer() :
 		if kwargs.get('neurons') :
 			neurons = kwargs.get('neurons')
 			self.ninputs = len(neurons)
-			self.neurons = [ neuron for neuron in neurons ]
+			self.neurons = neurons
+
 		else :
 			self.ninputs = kwargs.get('ninputs')
 			self.neurons = [ Neuron(self.ninputs) for i in range(0,kwargs.get('nneurons')) ]
@@ -180,10 +188,10 @@ class Neuron() :
 	def __init__(self,inputs) :
 
 		if type(inputs) == int :
-			self.weights = np.random.random(inputs+1)
+			self.weights = np.random.random(inputs)
 		
 		if type(inputs) == list :
-			self.weights = inputs
+			self.weights = np.array(inputs)
 
 	def __len__(self) :
 		return len(self.weights)
