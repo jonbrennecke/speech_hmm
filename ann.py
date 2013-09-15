@@ -15,18 +15,15 @@ class SelfOrganizingMap() :
 		allweights = self.network.getWeights()
 		dist, modinputs = [], []
 		for i in range(0,len(allweights)) :
-			print len(inputs)
 			modinputs.append(inputs)
 			wsum = self.layerSum(inputs,allweights[i])
-			inputs = [ self.network.sigmoid(s) for s in wsum ]
-			print len(inputs)
 			for j in range(0,len(allweights[i])) :
-
-				print 'here'
 
 				# the n-dimensional Euclidean distance is a measure of
 				# the similarity between the input vector and the neuron's weights
-				dist.append([self.distance( allweights[i][j], inputs ),self.network.getNeuron(i,j)])
+				dist.append( [ self.distance( allweights[i][j], inputs ), self.network.getNeuron(i,j) ] )
+
+			inputs = [ self.network.sigmoid(s) for s in wsum ]
 
 		# sort
 		dist = np.array(dist)
@@ -79,7 +76,6 @@ class SelfOrganizingMap() :
 		wsum = []
 		for neuron in layer :
 			wsum.append(sum(neuron * inputs))
-		# wsum.append(-1)
 		return wsum
 
 	def distance(self,v1,v2) :
@@ -97,8 +93,7 @@ class Network() :
 				self.layers = []
 				for layer in layers :
 					weights = [ Neuron(w) for w in layer ]
-					# print len(layer[0])
-					self.layers.append( NeuronLayer( **{'neurons' : weights[0:len(weights)-1] } ) )
+					self.layers.append( NeuronLayer( **{'neurons' : weights } ) )
 
 				self.ninputs = self.layers[0].ninputs
 				self.noutputs = self.layers[-1].ninputs + 2
@@ -111,7 +106,6 @@ class Network() :
 			self.noutputs = noutputs
 			self.numlayers = abs( noutputs - ninputs )	
 			self.layers = [ NeuronLayer( **{ 'nneurons' : ninputs+i+1, 'ninputs' : ninputs+i }) for i in range(0,self.numlayers) ]
-			# print self.ninputs, self.noutputs, self.numlayers
 
 	# load the neural network from a file
 	def parseFile(self,doc) :
@@ -128,16 +122,19 @@ class Network() :
 				l = map(float,l)
 				layers[-1].append(l)
 
-			if result[i] == '[' and result[i-1] == '[' :
-				layers.append(list())
+			try :
+				if result[i+1] == '[' and result[i] == '[' :
+					layers.append(list())
+			except IndexError :
+				pass
 
 		return layers[1::]
 
+	# create an 'ann.log' file that serves as a dump of the neural network's current state
 	def createFile(self) :
 		f = open('ann.log', 'w')
 		for layer in self.layers :
 			weights = layer.getWeights()
-			# weights = [ list(w[0:-1]) for w in weights ]
 			f.write( str(weights) )
 		f.close()
 
@@ -146,7 +143,6 @@ class Network() :
 			return 
 
 		for layer in self.layers :
-			print 'here'
 			wsum = layer.sum(inputs)
 			inputs = [ self.sigmoid(s) for s in wsum ]
 
