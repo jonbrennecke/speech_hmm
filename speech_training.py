@@ -11,7 +11,6 @@ if __name__ == '__main__':
 	chunk = 256
 	n = ann.Network(14,30)
 	mp = ann.SelfOrganizingMap(n) 
-	# n.createFile()
 
 	try :
 		files = os.listdir("../wav")
@@ -51,3 +50,7 @@ if __name__ == '__main__':
 
 	except OSError :
 		pass
+
+	# once the Self Organizing Map (SOM) has finished the training loop on every file in the .wav directory
+	# save a dump of the neural network's current state
+	n.createFile()
